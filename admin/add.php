@@ -19,10 +19,10 @@
             $image = $_FILES['image']['name'];
             move_uploaded_file($_FILES['image']['tmp_name'],$imgfile);
             
-            $sql = "INSERT INTO posts(title,content,image,author_id) VALUES (:title,:content,:image,:author_id)";
+            $sql = "INSERT INTO posts(title,content,image,author_id) VALUES (:title,:content,:image,:author)";
             $pdostat = $pdo -> prepare($sql);
             $result = $pdostat -> execute(
-                array(':title'=>$title,':content'=>$content,':image'=>$image,':author_id'=>$_SESSION['user_id'])
+                array(':title'=>$title,':content'=>$content,':image'=>$image,':author'=>$_SESSION['user_id'])
             );
             if($result){
                 echo "<script>alert('Sussessfully Adding');window.location.href='index.php';</script>";

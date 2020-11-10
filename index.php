@@ -1,3 +1,12 @@
+<?php 
+    session_start();
+    require_once "confiy/confiy.php";
+    
+    if(empty($_SESSION['user_id'] && $_SESSION['logged_in'])){
+        header("Location: login.php");
+    }
+    
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -25,69 +34,69 @@
        </div><br>
         <div class="col-md-12">
             <div class="row">
-                <div class="col-md-4">
-                    <div class="card card-widget">
-                        <div class="card-header">
-                            <h4>Blog Title</h4>
-                        </div>
-                        <div class="card-body">
-                            <img class="img-fluid pad" src="dist/img/photo2.png" alt="Photo">
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card card-widget">
-                        <div class="card-header">
-                            <h4>Blog Title</h4>
-                        </div>
-                        <div class="card-body">
-                            <img class="img-fluid pad" src="dist/img/photo2.png" alt="Photo">
-                        </div>
-                    </div>
+               <?php 
+                    
+                    if(!empty($_GET['pageno'])){
+                            $pageno = $_GET['pageno'];
+                        }else{
+                            $pageno = 1;
+                        }
+                        $numOfrecs = 6;
+                        $offset = ($pageno - 1) * $numOfrecs;
+                
+                    $sql = "SELECT * FROM posts ORDER BY id DESC";
+                    $pdostat = $pdo -> prepare($sql);
+                    $pdostat -> execute();
+                    $RowResult = $pdostat -> fetchAll();
+                    $total_pages = ceil(count($RowResult) / $numOfrecs);
 
-                </div>
-                <div class="col-md-4">
-                    <div class="card card-widget">
-                        <div class="card-header">
-                            <h4>Blog Title</h4>
-                        </div>
-                        <div class="card-body">
-                            <img class="img-fluid pad" src="dist/img/photo2.png" alt="Photo">
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card card-widget">
-                        <div class="card-header">
-                            <h4>Blog Title</h4>
-                        </div>
-                        <div class="card-body">
-                            <img class="img-fluid pad" src="dist/img/photo2.png" alt="Photo">
-                        </div>
-                    </div>
+                    $sql = "SELECT * FROM posts ORDER BY id DESC LIMIT $offset,$numOfrecs";
+                    $pdostat = $pdo -> prepare($sql);
+                    $pdostat -> execute();
+                    $result = $pdostat -> fetchAll();
 
-                </div>
-                <div class="col-md-4">
-                    <div class="card card-widget">
-                        <div class="card-header">
-                            <h4>Blog Title</h4>
+                
+                    if($result){
+                        $i = 1;
+                        foreach($result as $value){
+                    ?>
+                       <div class="col-md-4">
+                            <div class="card card-widget">
+                                <div class="card-header text-center">
+                                    <h4><?php echo $value['title']; ?></h4>
+                                </div>
+                                <div class="card-body">
+                                    <a href="blogdetail.php?id=<?php echo $value['id']; ?>">
+                                        <img src="admin/images/<?php echo $value['image']; ?>" width="150px" height="150px" alt="" style="width:393px;height: 251px; !important">
+                                    </a>
+                                </div>
+                            </div>
                         </div>
-                        <div class="card-body">
-                            <img class="img-fluid pad" src="dist/img/photo2.png" alt="Photo">
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card card-widget">
-                        <div class="card-header">
-                            <h4>Blog Title</h4>
-                        </div>
-                        <div class="card-body">
-                            <img class="img-fluid pad" src="dist/img/photo2.png" alt="Photo">
-                        </div>
-                    </div>
-                </div>
+
+                    <?php
+                        $i++;
+                        }
+                    }
+
+                ?>
             </div>
+        </div>
+        <div class="col-md-12">
+             <div class="card-footer clearfix">
+                   <nav aria-label="Page naigation example">
+                        <ul class="pagination pagination-sm m-0 float-right">
+                            <li class="page-item"><a href="?pageno=1" class="page-link">First</a></li>
+                            <li class="page-item <?php if($pageno <= 1){ echo 'disabled';} ?>">
+                                <a href="<?php if($pageno <= 1){ echo '#';}else{ echo '?pageno='.($pageno-1);} ?>" class="page-link">Previous</a>
+                            </li>
+                            <li class="page-item"><a href="#" class="page-link"><?php echo $pageno; ?></a></li>
+                            <li class="page-item <?php if($pageno >= $total_pages){echo 'disabled';}?>">
+                                <a href="<?php if($pageno >= $total_pages){echo '#';}else{echo '?pageno='.($pageno+1);} ?>" class="page-link">Next</a>
+                            </li>
+                            <li class="page-item"><a href="?pageno=<?php echo $total_pages; ?>" class="page-link">Last</a></li>
+                        </ul>  
+                   </nav>
+              </div>
         </div>
     </div>
 </div>
@@ -95,13 +104,16 @@
 
   <footer class="main-footer" style="margin-left:0 !important">
     <div class="float-right d-none d-sm-block">
-      <b>Version</b> 3.0.5
+      <a href="logout.php">
+            <input type="button" value="Log Out" class="btn btn-default">
+        </a>
     </div>
     <strong>Copyright &copy; 2014-2019 <a href="http://adminlte.io">AdminLTE.io</a>.</strong> All rights
     reserved.
+    <div class="float-right">
+        
+    </div>
   </footer>
-</div>
-<!-- ./wrapper -->
 
 <!-- jQuery -->
 <script src="plugins/jquery/jquery.min.js"></script>
