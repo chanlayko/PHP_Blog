@@ -1,34 +1,51 @@
 <?php 
     session_start();
     require_once "../confiy/confiy.php";
+    require_once "../confiy/common.php";
     
     if(empty($_SESSION['user_id'] && $_SESSION['logged_in'])){
         header("Location: login.php");
     }
-   
+    if($_SESSION['role'] != 1){
+         header("Location: login.php");
+    }
     if(isset($_POST['submit'])){
-        $imgfile = "images/".($_FILES["image"]["name"]);
-        
-        $imgfileType = pathinfo($imgfile,PATHINFO_EXTENSION);
-        
-        if($imgfileType != 'png' && $imgfileType != 'jpg' && $imgfileType != 'jpeg'){
-            echo "<script>alert('Image may be png,jpg,jpeg')</script>";
+        if(empty($_POST['title']) || empty($_POST['content']) || empty($_FILES['image'])){
+            if(empty($_POST['title'])){
+                $titleError = "* Title cannot be Null";
+            }
+            if(empty($_POST['content'])){
+                $contError = "* Content cannot be Null";
+            }
+            if(empty($_FILES['image'])){
+                $imgError = "* Image cannot be Null";
+            }
         }else{
-            $title = $_POST['title'];
-            $content = $_POST['content'];
-            $image = $_FILES['image']['name'];
-            move_uploaded_file($_FILES['image']['tmp_name'],$imgfile);
-            
-            $sql = "INSERT INTO posts(title,content,image,author_id) VALUES (:title,:content,:image,:author)";
-            $pdostat = $pdo -> prepare($sql);
-            $result = $pdostat -> execute(
-                array(':title'=>$title,':content'=>$content,':image'=>$image,':author'=>$_SESSION['user_id'])
-            );
-            if($result){
-                echo "<script>alert('Sussessfully Adding');window.location.href='index.php';</script>";
+            $imgfile = "images/".($_FILES["image"]["name"]);
+
+            $imgfileType = pathinfo($imgfile,PATHINFO_EXTENSION);
+
+            if($imgfileType != 'png' && $imgfileType != 'jpg' && $imgfileType != 'jpeg'){
+                echo "<script>alert('Image may be png,jpg,jpeg')</script>";
+            }else{
+                $title = $_POST['title'];
+                $content = $_POST['content'];
+                $image = $_FILES['image']['name'];
+                move_uploaded_file($_FILES['image']['tmp_name'],$imgfile);
+
+                $sql = "INSERT INTO posts(title,content,image,author_id) VALUES (:title,:content,:image,:author)";
+                $pdostat = $pdo -> prepare($sql);
+                $result = $pdostat -> execute(
+                    array(':title'=>$title,':content'=>$content,':image'=>$image,':author'=>$_SESSION['user_id'])
+                );
+                if($result){
+                    echo "<script>alert('Sussessfully Adding');window.location.href='index.php';</script>";
+                }
             }
         }
     }
+
+    
 
 ?>
 
@@ -72,17 +89,21 @@
               </div>
               <div class="card-body">
                   <form action="" method="post" enctype="multipart/form-data">
+                   <input type="hidden" name="_token" value="<?php echo $_SESSION['_token']; ?>">
                     <div class="form-group">
                         <label for="title">Title</label>
-                        <input type="text" class="form-control" id="title" name="title" required>
+                        <input type="text" class="form-control" id="title" name="title" >
+                        <p style="color:red"><?php echo empty($titleError) ? '' : $titleError; ?></p>
                     </div>
                     <div class="form-group">
                         <label for="content">Content</label>
                         <textarea name="content" class="form-control" id="content" cols="20" rows="5"></textarea>
+                        <p style="color:red"><?php echo empty($contError) ? '' : $contError; ?></p>
                     </div>
                     <div class="form-group">
-                       <label for="image">Image</label><br>
-                        <input type="file" name="image" id="image" required>
+                       <label for="image">Image</label>
+                        <p style="color:red"><br><?php echo empty($imgError) ? '' : $imgError; ?></p>
+                        <input type="file" name="image" id="image">
                     </div>
                     <div class="form-group float-sm-right">
                         <a href="#"><input type="submit" value="SUBMIT" name="submit" class="btn btn-primary"></a>

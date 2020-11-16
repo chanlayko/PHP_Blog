@@ -1,6 +1,7 @@
 <?php
     session_start();
     require_once "confiy/confiy.php";
+    require_once "confiy/common.php";
 
     if(isset($_POST['signin'])){
         $email = $_POST['email'];
@@ -11,11 +12,11 @@
         $pdostat -> bindValue(":email",$email);
         $pdostat -> execute();
         $user = $pdostat -> fetch(PDO::FETCH_ASSOC);
-        
         if($user){
-            if($user['password'] == $password){
+            if(password_verify($password,$user['password'])){
                 $_SESSION['user_id'] = $user['id'];
                 $_SESSION['user_name'] = $user['user'];
+                $_SESSION['role'] = 0;
                 $_SESSION['logged_in'] = time();
                 
                 header("Location: index.php");
@@ -59,6 +60,7 @@
       <p class="login-box-msg">Sign in to start your session</p>
 
       <form action="login.php" method="post">
+       <input type="hidden" name="_token" value="<?php echo $_SESSION['_token']; ?>">
         <div class="input-group mb-3">
           <input type="email" name="email" class="form-control" placeholder="Email">
           <div class="input-group-append">

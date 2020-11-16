@@ -1,10 +1,12 @@
 <?php 
     session_start();
     require_once "confiy/confiy.php";
+    require_once "confiy/common.php";
     
     if(empty($_SESSION['user_id'] && $_SESSION['logged_in'])){
         header("Location: login.php");
     }
+    
     
 ?>
 <!DOCTYPE html>
@@ -12,7 +14,7 @@
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <title>AdminLTE 3 | Widgets</title>
+  <title>Blog Site</title>
   <!-- Tell the browser to be responsive to screen width -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <!-- Font Awesome -->
@@ -63,7 +65,7 @@
                        <div class="col-md-4">
                             <div class="card card-widget">
                                 <div class="card-header text-center">
-                                    <h4><?php echo $value['title']; ?></h4>
+                                    <h4><?php echo escape($value['title']); ?></h4>
                                 </div>
                                 <div class="card-body">
                                     <a href="blogdetail.php?id=<?php echo $value['id']; ?>">

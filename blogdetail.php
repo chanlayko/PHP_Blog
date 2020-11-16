@@ -1,6 +1,7 @@
 <?php 
     session_start();
     require_once "confiy/confiy.php";
+    require_once "confiy/common.php";
     
     if(empty($_SESSION['user_id'] && $_SESSION['logged_in'])){
         header("Location: login.php");
@@ -15,24 +16,32 @@
     $cmpdosta = $pdo -> prepare("SELECT * FROM comments WHERE post_id=$blogId");
     $cmpdosta -> execute();
     $cmResult = $cmpdosta -> fetchAll();
-
-//    print_r($cmResult[0]['author_id']);
-
-    $aUser_name = $cmResult[0]['author_id'];
-    $aupdosta = $pdo -> prepare("SELECT * FROM users WHERE id=$aUser_name");
-    $aupdosta -> execute();
-    $auResult = $aupdosta -> fetchAll();
+    
+    $auResult = [];
+    if($cmResult){
+        foreach($cmResult as $key => $value){
+            $aUser_name = $cmResult[$key]['author_id'];
+            $aupdosta = $pdo -> prepare("SELECT * FROM users WHERE id=$aUser_name");
+            $aupdosta -> execute();
+            $auResult[] = $aupdosta -> fetchAll();
+        }
+        
+    }
 
     
-    if($_POST){
-        $comment = $_POST["comment"];
-        $user_id = $_SESSION['user_id'];
-        $pdostat = $pdo -> prepare("INSERT INTO comments(content,author_id,post_id) VALUES (:content,:author_id,:post_id)");
-        $result = $pdostat -> execute(
-            array(":content"=>$comment,":author_id"=>$user_id,":post_id"=>$blogId)
-        );
-        if($result){
-            header("Location:blogdetail.php?id=$blogId");
+    if(isset($_POST['comment'])){
+        if(empty($_POST['comment'])){
+            $cmtError = "* Comment cannot be Null *";
+        }else{
+            $comment = $_POST["comment"];
+            $user_id = $_SESSION['user_id'];
+            $pdostat = $pdo -> prepare("INSERT INTO comments(content,author_id,post_id) VALUES (:content,:author_id,:post_id)");
+            $result = $pdostat -> execute(
+                array(":content"=>$comment,":author_id"=>$user_id,":post_id"=>$blogId)
+            );
+            if($result){
+                header("Location:blogdetail.php?id=$blogId");
+            }
         }
     }
 
@@ -64,13 +73,13 @@
               <div class="col-md-12">
                 <div class="card card-widget">
                   <div class="card-header text-center">
-                        <h4><?php echo $shResult[0]['title']; ?></h4>
+                        <h4><?php echo escape($shResult[0]['title']); ?></h4>
                   </div>
                   <!-- /.card-header -->
                   <div class="card-body">
                    <img src="" alt="">
                     <img src="admin/images/<?php echo $shResult[0]['image']; ?>" class="img-fluid pad"  alt="Photo">
-                    <p><?php echo $shResult[0]['content']; ?></p>
+                    <p><?php echo escape($shResult[0]['content']); ?></p>
                   </div>
                   <!-- /.card-body -->
                   <div class="card-footer card-comments">
@@ -79,13 +88,22 @@
                    </div>
                     <div class="card-comment">
 
-                      <div class="comment-text" style="margin-left:0px; !important">
-                        <span class="username">
-                              <?php echo $auResult[0]['user']; ?>
-                          <span class="text-muted float-right"><?php echo $cmResult[0]['created_at']; ?></span>
-                        </span><!-- /.username -->
-                           <?php echo $cmResult[0]['content']; ?>
-                      </div>
+                      <?php 
+                        if($cmResult){  ?>
+                                <div class="comment-text" style="margin-left:0px; !important">
+                               <?php foreach ($cmResult as $key => $value){ ?>
+                                        <span class="username">
+                                        <?php echo escape($auResult[$key][0]['user']); ?>
+                                        <span class="text-muted float-right"><?php echo $value['created_at']; ?></span>
+                                        </span><!-- /.username -->
+                                        <?php echo escape($value['content']); ?><br>
+                                        <?php    
+                                            }
+                                           ?>
+                            </div>
+                                <?php
+                                }
+                                ?>
                       <!-- /.comment-text -->
                     </div>
                     <!-- /.card-comment -->
@@ -93,10 +111,12 @@
                   <!-- /.card-footer -->
                   <div class="card-footer">
                     <form action="" method="post">
+                     <input type="hidden" name="_token" value="<?php echo $_SESSION['_token']; ?>">
                       <img class="img-fluid img-circle img-sm" src="dist/img/user4-128x128.jpg" alt="Alt Text">
                       <!-- .img-push is used to add margin to elements next to floating images -->
                       <div class="img-push">
                         <input type="text" name="comment" class="form-control form-control-sm" placeholder="Press enter to post comment">
+                        <p style="color:red"><?php echo empty($cmtError) ? '' : $cmtError; ?></p>
                       </div>
                     </form>
                   </div>
@@ -132,12 +152,12 @@
 </div>
 <!-- ./wrapper -->
 <!-- jQuery -->
-<script srplugins/jquery/jquery.min.js"></script>
+<script src="plugins/jquery/jquery.min.js"></script>
 <!-- Bootstrap 4 -->
-<script srplugins/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="plugins/bootstrap/js/bootstrap.bundle.min.js"></script>
 <!-- AdminLTE App -->
-<script srdist/js/adminlte.min.js"></script>
+<script src="dist/js/adminlte.min.js"></script>
 <!-- AdminLTE for demo purposes -->
-<script srdist/js/demo.js"></script>
+<script src="dist/js/demo.js"></script>
 </body>
 </html>

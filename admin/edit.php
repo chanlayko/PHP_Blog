@@ -1,41 +1,54 @@
 <?php 
     session_start();
     require_once "../confiy/confiy.php";
+    require_once "../confiy/common.php";
     
     if(empty($_SESSION['user_id'] && $_SESSION['logged_in'])){
         header("Location: login.php");
     }
+    if($_SESSION['role'] != 1){
+         header("Location: login.php");
+    }
    
     if(isset($_POST['submit'])){
-        $id = $_POST['id'];
-        $title = $_POST['title'];
-        $content = $_POST['content'];
-        
-        if($_FILES['image']['name'] != null){
-            $imgfile = "images/".($_FILES["image"]["name"]);
+        if(empty($_POST['title']) || empty($_POST['content'])){
+            if(empty($_POST['title'])){
+                $titleError = "* Title cannot be Null";
+            }
+            if(empty($_POST['content'])){
+                $contError = "* Content cannot be Null";
+            }
+        }else{
+            $id = $_POST['id'];
+            $title = $_POST['title'];
+            $content = $_POST['content'];
 
-            $imgfileType = pathinfo($imgfile,PATHINFO_EXTENSION);
+            if($_FILES['image']['name'] != null){
+                $imgfile = "images/".($_FILES["image"]["name"]);
 
-            if($imgfileType != 'png' && $imgfileType != 'jpg' && $imgfileType != 'jpeg'){
-                echo "<script>alert('Image may be png,jpg,jpeg')</script>";
+                $imgfileType = pathinfo($imgfile,PATHINFO_EXTENSION);
+
+                if($imgfileType != 'png' && $imgfileType != 'jpg' && $imgfileType != 'jpeg'){
+                    echo "<script>alert('Image may be png,jpg,jpeg')</script>";
+                }else{
+                    $image = $_FILES['image']['name'];
+                    move_uploaded_file($_FILES['image']['tmp_name'],$imgfile);
+
+                    $sql = "UPDATE posts SET title='$title',content='$content',image='$image' WHERE id='$id'";
+                    $pdostat = $pdo -> prepare($sql);
+                    $result = $pdostat -> execute();
+                    if($result){
+                        echo "<script>alert('Sussessfully Updated');window.location.href='index.php';</script>";
+                    }
+                }
+
             }else{
-                $image = $_FILES['image']['name'];
-                move_uploaded_file($_FILES['image']['tmp_name'],$imgfile);
-                
-                $sql = "UPDATE posts SET title='$title',content='$content',image='$image' WHERE id='$id'";
+                $sql = "UPDATE posts SET title='$title',content='$content' WHERE id='$id'";
                 $pdostat = $pdo -> prepare($sql);
                 $result = $pdostat -> execute();
                 if($result){
                     echo "<script>alert('Sussessfully Updated');window.location.href='index.php';</script>";
                 }
-            }
-            
-        }else{
-            $sql = "UPDATE posts SET title='$title',content='$content' WHERE id='$id'";
-            $pdostat = $pdo -> prepare($sql);
-            $result = $pdostat -> execute();
-            if($result){
-                echo "<script>alert('Sussessfully Updated');window.location.href='index.php';</script>";
             }
         }
     }
@@ -86,19 +99,26 @@
               </div>
               <div class="card-body">
                   <form action="" method="post" enctype="multipart/form-data">
+                   <input type="hidden" name="_token" value="<?php echo $_SESSION['_token']; ?>">
                    <input type="hidden" name="id" value="<?php echo $result[0]['id']; ?>">
                     <div class="form-group">
                         <label for="title">Title</label>
-                        <input type="text" class="form-control" value="<?php echo $result[0]['title']; ?>" id="title" name="title" required>
+                        <input type="text" class="form-control" value="<?php echo escape($result[0]['title']); ?>" id="title" name="title">
+                        <p style="color:red"><?php echo empty($contError) ? '' : $contError; ?></p>
+
                     </div>
                     <div class="form-group">
                         <label for="content">Content</label>
-                        <textarea name="content" class="form-control" id="content" cols="20" rows="5"><?php echo $result[0]['content']; ?></textarea>
+                        <textarea name="content" class="form-control" id="content" cols="20" rows="5"><?php echo escape($result[0]['content']); ?></textarea>escape(
+                        <p style="color:red"><?php echo empty($contError) ? '' : $contError; ?></p>
+
                     </div>
                     <div class="form-group">
                       <img src="images/<?php echo $result[0]['image']; ?>" width="150px" height="150px" alt=""><br>
                        <label for="image">Image</label><br>
                         <input type="file" name="image" id="image">
+                        <p style="color:red"><?php echo empty($contError) ? '' : $contError; ?></p>
+
                     </div>
                     <div class="form-group float-sm-right">
                         <a href="#"><input type="submit" value="SUBMIT" name="submit" class="btn btn-primary"></a>

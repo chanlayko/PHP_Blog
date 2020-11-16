@@ -11,14 +11,15 @@
          header("Location: login.php");
     }
 
-    if($_POST['search']){
+    if(!empty($_POST['search'])){
         setcookie('search',$_POST['search'], time() + (86400 * 30), "/");
     }else{
-        if($_GET['pageno']){
-            unset($_COOKIE['search']); 
-            setcookie('search', null, -1, '/'); 
+        if(!empty($_GET['pageno'])){
+            unset($_COOKIE['search']);
+            setcookie('search', null, -1, '/');
         }
     }
+
 ?>
 
 <!-- header -->
@@ -56,51 +57,54 @@
                 <h5 class="m-0">Featured</h5>
               </div>
               <?php 
-
                 if(!empty($_GET['pageno'])){
                     $pageno = $_GET['pageno'];
                 }else{
                     $pageno = 1;
                 }
-                $numOfrecs = 5;
+                $numOfrecs = 3;
                 $offset = ($pageno - 1) * $numOfrecs;
                 
                 if(empty($_POST['search']) && empty($_COOKIE['search'])){
-                    $sql = "SELECT * FROM posts ORDER BY id DESC";
+                    $sql = "SELECT * FROM users ORDER BY id DESC";
                     $pdostat = $pdo -> prepare($sql);
                     $pdostat -> execute();
                     $RowResult = $pdostat -> fetchAll();
                     $total_pages = ceil(count($RowResult) / $numOfrecs);
 
-                    $sql = "SELECT * FROM posts ORDER BY id DESC LIMIT $offset,$numOfrecs";
-                    $pdostat = $pdo -> prepare($sql);
-                    $pdostat -> execute();
-                    $result = $pdostat -> fetchAll();                        
-                }else{
-                    $searchkey = $_POST['search'] ? $_POST['search'] : $_COOKIE['search'];
-                    $sql = "SELECT * FROM posts WHERE title LIKE '%$searchkey%' ORDER BY id DESC";
-                    $pdostat = $pdo -> prepare($sql);
-                    $pdostat -> execute();
-                    $RowResult = $pdostat -> fetchAll();
-                    $total_pages = ceil(count($RowResult) / $numOfrecs);
-
-                    $sql = "SELECT * FROM posts WHERE title LIKE '%$searchkey%' ORDER BY id DESC LIMIT $offset,$numOfrecs";
+                    $sql = "SELECT * FROM users ORDER BY id DESC LIMIT $offset,$numOfrecs";
                     $pdostat = $pdo -> prepare($sql);
                     $pdostat -> execute();
                     $result = $pdostat -> fetchAll();
-                }                 
+                    
+                }else{
+                    $searchkey = empty($_POST['search']) ? empty($_POST['search']) : empty($_COOKIE['search']);
+                    $sql = "SELECT * FROM users WHERE user LIKE '%$searchkey%' ORDER BY id DESC";
+                    $pdostat = $pdo -> prepare($sql);
+                    $pdostat -> execute();
+                    $RowResult = $pdostat -> fetchAll();
+                    $total_pages = ceil(count($RowResult) / $numOfrecs);
+
+                    $sql = "SELECT * FROM users WHERE user LIKE '%$searchkey%' ORDER BY id DESC LIMIT $offset,$numOfrecs";
+                    $pdostat = $pdo -> prepare($sql);
+                    $pdostat -> execute();
+                    $result = $pdostat -> fetchAll();
+                } 
+                
+                
                 ?>
               <div class="card-body">
                    <div class="form-group">
-                       <a href="add.php"><input type="submit" value="New Blog Posts" class="btn btn-success"></a>
+                       <a href="add_user.php"><input type="submit" value="Add New User" class="btn btn-success"></a>
                    </div>
                    <div class="form-group">
                     <table class="table table-bordered table-striped table-hover">
                         <thead class="text-center">
                             <tr>
                                 <th style="width: 10px">#</th>
-                                <th style="width: 200px">Title</th>
-                                <th>Content</th>
+                                <th style="width: 200px">Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
                                 <th colspan="2" style="width: 50px">Actions</th>
                             </tr>
                         </thead>
@@ -113,10 +117,11 @@
                                 ?>
                                       <tr>
                                         <td><?php echo $i; ?></td>
-                                        <td><?php echo escape($value['title']); ?></td>
-                                        <td><?php echo escape(substr($value['content'],0,100)); ?>...</td>
-                                        <td style="width: 50px"><a href="edit.php?id=<?php echo $value['id']; ?>"><input type="submit" value="Edit" class="btn btn-primary text-center"></a></td>
-                                        <td style="width: 50px"><a href="delete.php?id=<?php echo $value['id']; ?>"><input type="submit" value="Delete" class="btn btn-primary text-center" onclick="return confirm('Are you sure you want to delete this item')"></a></td>
+                                        <td><?php echo escape($value['user']); ?></td>
+                                        <td><?php echo escape($value['email']); ?></td>
+                                        <td><?php echo escape($value['role']) ?></td>
+                                        <td style="width: 50px"><a href="edit_user.php?id=<?php echo $value['id']; ?>"><input type="submit" value="Edit" class="btn btn-primary text-center"></a></td>
+                                        <td style="width: 50px"><a href="delete_user.php?id=<?php echo $value['id']; ?>"><input type="submit" value="Delete" class="btn btn-primary text-center" onclick="return confirm('Are you sure you want to delete this item')"></a></td>
 
                                     </tr>  
 
@@ -140,13 +145,13 @@
                         <ul class="pagination pagination-sm m-0 float-right">
                             <li class="page-item"><a href="?pageno=1" class="page-link">First</a></li>
                             <li class="page-item <?php if($pageno <= 1){ echo 'disabled';} ?>">
-                                <a href="<?php if($pageno <= 1){ echo '#';}else{ echo "?pageno=".($pageno-1);} ?>" class="page-link">Previous</a>
+                                <a href="<?php if($pageno <= 1){ echo '#';}else{ echo '?pageno='.($pageno-1);} ?>" class="page-link">Previous</a>
                             </li>
                             <li class="page-item"><a href="#" class="page-link"><?php echo $pageno; ?></a></li>
                             <li class="page-item <?php if($pageno >= $total_pages){echo 'disabled';}?>">
-                                <a href="<?php if($pageno >= $total_pages){ echo '#';}else{ echo "?pageno=".($pageno+1);} ?>" class="page-link">Next</a>
+                                <a href="<?php if($pageno >= $total_pages){echo '#';}else{echo '?pageno='.($pageno+1);} ?>" class="page-link">Next</a>
                             </li>
-                            <li class="page-item"><a href="?pageno=<?php echo $total_pages ?>" class="page-link">Last</a></li>
+                            <li class="page-item"><a href="?pageno=<?php echo $total_pages; ?>" class="page-link">Last</a></li>
                         </ul>  
                    </nav>
               </div>
